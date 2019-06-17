@@ -56,6 +56,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+		  <groupId>org.apache.commons</groupId>
+		  <artifactId>commons-lang3</artifactId>
+		  <version>3.9</version>
+		</dependency>
+    <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-mongo-client</artifactId>
       <version>${vertx.version}</version>
