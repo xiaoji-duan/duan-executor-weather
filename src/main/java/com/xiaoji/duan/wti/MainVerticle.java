@@ -185,7 +185,7 @@ public class MainVerticle extends AbstractVerticle {
 							JsonObject weather = new JsonObject();
 							
 							for (JsonObject result : results) {
-								weather.mergeIn(result);
+								weather.mergeIn(result, true);
 							}
 							
 							weather.put("locationid", locationid);
