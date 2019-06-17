@@ -130,6 +130,29 @@ public class MainVerticle extends AbstractVerticle {
 		});
 	}
 	
+	private void getWeather3(Future<JsonObject> future, String locationid) {
+		String requesturi = config().getString("weather.uri.zhishu", "http://www.weather.com.cn/data/zs/##locationid##.html").replaceAll("##locationid##", locationid);
+
+		client.getAbs(requesturi).send(handler -> {
+			if (handler.succeeded()) {
+				HttpResponse<Buffer> resp = handler.result();
+				
+				String jsonstring = resp.bodyAsString();
+				
+				if (jsonstring != null && jsonstring.trim().startsWith("{") && jsonstring.trim().endsWith("}")) {
+					JsonObject weather = new JsonObject(jsonstring);
+					
+					future.complete(weather);
+				} else {
+					future.complete(new JsonObject());
+				}
+				
+			} else {
+				future.fail(handler.cause());
+			}
+		});
+	}
+	
 	private void weather(String consumer, String type, String locationid, String date, String time, String nextTask, Integer retry) {
 		
 		// 非法输入参数正常返回
@@ -148,7 +171,6 @@ public class MainVerticle extends AbstractVerticle {
 				new JsonObject()
 				.put("locationid", locationid)
 				.put("date", date)
-				.put("time", time)
 				.put("type", type),
 				new JsonObject(),
 				findOne -> {
@@ -175,6 +197,11 @@ public class MainVerticle extends AbstractVerticle {
 					futures.add(weather2Future);
 					
 					getWeather2(weather2Future, locationid);
+					
+					Future<JsonObject> weather3Future = Future.future();
+					futures.add(weather3Future);
+					
+					getWeather3(weather3Future, locationid);
 					
 					CompositeFuture.all(Arrays.asList(futures.toArray(new Future[futures.size()])))
 					.map(v -> futures.stream().map(Future::result).collect(Collectors.toList()))
