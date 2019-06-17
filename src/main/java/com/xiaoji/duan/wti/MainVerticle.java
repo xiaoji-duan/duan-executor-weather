@@ -78,7 +78,7 @@ public class MainVerticle extends AbstractVerticle {
 	}
 
 	private void weather(String consumer, String type, String locationid, String date, String time, String nextTask, Integer retry) {
-		String requesturi = config().getString("weather.uri.default", "http://www.weather.com.cn/data/sk/##locationid##.html").replaceAll("##locationid##", locationid);
+		String requesturi = config().getString("weather.uri.cityinfo", "http://www.weather.com.cn/data/cityinfo/##locationid##.html").replaceAll("##locationid##", locationid);
 		
 		mongodb.findOne("wti_location_weather", 
 				new JsonObject()
