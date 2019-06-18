@@ -153,6 +153,29 @@ public class MainVerticle extends AbstractVerticle {
 		});
 	}
 	
+	private void getWeather4(Future<JsonObject> future, String locationid) {
+		String requesturi = config().getString("weather.uri.tianqiapi", "https://www.tianqiapi.com/api/?version=v1&cityid=##locationid##").replaceAll("##locationid##", locationid);
+
+		client.getAbs(requesturi).send(handler -> {
+			if (handler.succeeded()) {
+				HttpResponse<Buffer> resp = handler.result();
+				
+				String jsonstring = resp.bodyAsString();
+				
+				if (jsonstring != null && jsonstring.trim().startsWith("{") && jsonstring.trim().endsWith("}")) {
+					JsonObject weather = new JsonObject(jsonstring);
+					
+					future.complete(weather);
+				} else {
+					future.complete(new JsonObject());
+				}
+				
+			} else {
+				future.fail(handler.cause());
+			}
+		});
+	}
+	
 	private void weather(String consumer, String type, String locationid, String date, String time, String nextTask, Integer retry) {
 		
 		// 非法输入参数正常返回
@@ -203,6 +226,11 @@ public class MainVerticle extends AbstractVerticle {
 					
 					getWeather3(weather3Future, locationid);
 					
+					Future<JsonObject> weather4Future = Future.future();
+					futures.add(weather4Future);
+					
+					getWeather4(weather4Future, locationid);
+					
 					CompositeFuture.all(Arrays.asList(futures.toArray(new Future[futures.size()])))
 					.map(v -> futures.stream().map(Future::result).collect(Collectors.toList()))
 					.setHandler(handler -> {
@@ -212,7 +240,11 @@ public class MainVerticle extends AbstractVerticle {
 							JsonObject weather = new JsonObject();
 							
 							for (JsonObject result : results) {
-								weather.mergeIn(result, true);
+								if (result.containsKey("data")) {
+									weather.put("sevendays", result);
+								} else {
+									weather.mergeIn(result, true);
+								}
 							}
 							
 							weather.put("locationid", locationid);
