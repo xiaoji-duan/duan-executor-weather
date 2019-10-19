@@ -154,7 +154,12 @@ public class MainVerticle extends AbstractVerticle {
 	}
 	
 	private void getWeather4(Future<JsonObject> future, String locationid) {
-		String requesturi = config().getString("weather.uri.tianqiapi", "https://www.tianqiapi.com/api/?version=v1&cityid=##locationid##").replaceAll("##locationid##", locationid);
+		String appid = config().getString("weather.uri.tianqiapi.appid", "");
+		String secret = config().getString("weather.uri.tianqiapi.secret", "");
+		String requesturi = config().getString("weather.uri.tianqiapi", "https://www.tianqiapi.com/api/?version=v1&cityid=##locationid##")
+				.replaceAll("##locationid##", locationid)
+				.replaceAll("##appid##", appid)
+				.replaceAll("##appsecret##", secret);
 
 		client.getAbs(requesturi).send(handler -> {
 			if (handler.succeeded()) {
